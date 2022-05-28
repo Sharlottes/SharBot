@@ -1,5 +1,8 @@
 # SharBot
-real time role playing game
 
-## How To Start
-you can't. 
+
+## Usage
+```
+yarn
+npm run r
+```

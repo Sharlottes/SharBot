@@ -6,6 +6,9 @@ build/
 
 # 테스트 코드
 window_connect.bat
+.eslintrc.json
+.prettierrc.json
+error.json
 
 # sdk
 src/firebase.json
