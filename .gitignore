@@ -1,0 +1,12 @@
+# 외부 모듈
+node_modules/
+
+# 빌드 파일
+build/
+
+# 테스트 코드
+window_connect.bat
+
+# sdk
+src/firebase.json
+src/discord.json

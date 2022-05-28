@@ -1,0 +1,58 @@
+{
+  "name": "sharbot",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "r": "ts-node-dev --transpile-only -r tsconfig-paths/register src/index.ts",
+    "watchMode": "tsc -w",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@discordjs/rest": "^0.2.0-canary.0",
+    "@discordjs/builders": "^0.10.0",
+    "discord-api-types": "^0.26.0",
+    "firebase-admin": "^10.0.1",
+    "discord.js": "^13.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.1",
+    "@types/body-parser": "^1.19.2",
+    "@typescript-eslint/eslint-plugin": "^5.10.2",
+    "@typescript-eslint/parser": "^5.10.2",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "prettier": "2.5.1",
+    "ts-node": "^10.4.0",
+    "ts-node-dev": "^1.1.8",
+    "tsconfig-paths": "^3.12.0",
+    "typescript": "^4.5.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sharlottes/sharbot.git"
+  },
+  "keywords": [
+    "discord"
+  ],
+  "author": "Sharlotte",
+  "contributors": [
+    "AmateurPotion"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sharlottes/sharbot/issues"
+  },
+  "homepage": "https://github.com/Sharlottes/sharbot#readme",
+  "description": "",
+  "nodemonConfig": {
+    "ignore": [],
+    "delay": 2500
+  }
+}
