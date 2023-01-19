@@ -13,3 +13,5 @@ error.json
 # sdk
 src/firebase.json
 src/discord.json
+
+.env

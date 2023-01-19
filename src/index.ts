@@ -1,100 +1,104 @@
-import { Client, Intents } from "discord.js";
-import { REST } from "@discordjs/rest";
+import { Client, GatewayIntentBits, REST } from 'discord.js';
+import CM from '@SharBot/commands';
+import CommandManager from './commands/CommandManager';
+import { config } from 'dotenv';
+config();
 
-import CM from "@SharBot/commands";
-import config from "@SharBot/discord.json";
+const masterIDs = ['473072758629203980'];
 
-import Vars from './Vars';
-
-const time = Date.now();
-const masterIDs = [
-    "462167403237867520",
-    "473072758629203980",
-    "939349343431954462"
-];
-
-// App 선언 - 봇의 모든 코드를 관리함
 const app = {
-    client: new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] }),
-    option: new Map<string, boolean|number|string>(),
-    config: config,
-    rest: new REST({ version: '9' }).setToken(config.botToken)
+  client: new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
+  }),
+  rest: new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN),
 };
+(async () => {
+  //기본 명령어 로딩
+  CM.commands.clear();
+  console.log(`command initialization has been done in`);
 
-const { client, option } = app;
-
-// 프로그램 실행 인자 추출
-for(let i = 2; i < process.argv.length; i += 2) {
-    const arg = process.argv[i];
-    const value = (()=>{
-        const value = process.argv[i + 1];
-        if(value == 'true') return true;
-        if(value == 'false') return false;
-        if(isNaN(Number(value))) return Number(value);
-        return value;
-    })();
-    
-    if(arg.startsWith('--') && value) option.set(arg.slice(2), value);
-}
-
-(async ()=>{
-    //전역 변수 로딩
-    Vars.init();
-    console.log(`vars initialization has been done: ${Date.now()-time}ms`);
-
-    //기본 명령어 로딩
-    CM.commands.clear();
-    console.log(`command initialization has been done in ${(Date.now() - time)}ms`);
-    
-    //디스코드 봇 로그인
-    await client.login(config.botToken);
-    console.log(`discord bot login has been done in ${(Date.now() - time)}ms`);
+  //디스코드 봇 로그인
+  await app.client.login(process.env.DISCORD_TOKEN);
+  console.log(`discord bot login has been done in`);
 })();
 
-client.once("ready", async () => {
-    console.log(`Logged in as ${client.user?.tag}(${client.application?.id}): ${Date.now()-time}ms`)
-    
-    await CM.refreshCommand("global");
-    console.log(`global command push has been done: ${Date.now()-time}ms`);
+app.client
+  .once('ready', async () => {
+    console.log(
+      `Logged in as ${app.client.user?.tag}(${app.client.application?.id})`
+    );
+  })
+  .on('interactionCreate', async (interaction) => {
+    if (interaction.isChatInputCommand()) {
+      const command = CM.commands.get(interaction.commandName);
+      if (!command || !interaction.channel) return;
+      await interaction.deferReply();
 
-    /*
-    // 서버마다 데이터베이스 체크
-    client.guilds.cache.forEach(guild => {
-        const doc = firebaseAdmin.firestore.collection(guild.id).doc("config");
-        const snapshot = await doc.get();
-        if (!snapshot.exists) {
-            doc.set({
-                name: guild.name,
-                version: config.version,
-                language: guild.preferredLocale
-            });
-        }
-    });
-    */
-});
-
-client.on("interactionCreate", async interaction => {
-    if(interaction.isCommand()) {
-        const command = CM.commands.get(interaction.commandName);
-        if(!command || !interaction.channel) return;
-        await interaction.deferReply().catch(async e=> setTimeout(() => interaction.deferReply().catch(console.log), 1000));
-    
-        if(interaction.channel.type == "DM" || !command.dmOnly) command.run(interaction);
-        else interaction.editReply("This command is available only in the dm channel.");
+      if (interaction.channel.isDMBased() || !command.dmOnly)
+        command.run(interaction);
+      else
+        await interaction.editReply(
+          'This command is available only in the dm channel.'
+        );
     }
-});
+  })
+  .on('messageCreate', async (message) => {
+    if (
+      message.channel.isTextBased() &&
+      message.guild != null &&
+      (message.author.id == message.guild.ownerId ||
+        masterIDs.includes(message.author.id))
+    ) {
+      const time = new Date().getTime();
 
-client.on("messageCreate", async message => {
-    //only avaliable for server owner or whitelist user
-    if(message.channel.type === 'GUILD_TEXT' && message.content == "!refresh" && message.guild != null && (message.author.id == message.guild.ownerId || masterIDs.includes(message.author.id))) {
-        const time = new Date().getTime();
-        const guild = message.guild;
+      if (message.content == '!refresh') {
+        message.reply(
+          `guild command refresh start! server: ${message.guild.name}`
+        );
 
-        message.reply(`refresh start! server: ${guild.name}`).catch(e => message.reply((e as object).toString()));
         CM.commands.clear();
-        await CM.refreshCommand("guild", guild);
-        message.reply(`guild command push has been done in ${(Date.now() - time)}ms`);
+        CommandManager.init();
+        await CM.refreshCommand('guild', message.guild);
+
+        message.reply(
+          `guild command refresh has been done in ${Date.now() - time}ms`
+        );
+      } else if (message.content == '!refresh global') {
+        message.reply(`global command refresh start!`);
+
+        CM.commands.clear();
+        CommandManager.init();
+        await CM.refreshCommand('global');
+
+        message.reply(
+          `global command refresh has been done in ${Date.now() - time}ms`
+        );
+      }
     }
-});
+  });
+
+process
+  .on('unhandledRejection', async (err) => {
+    console.error(
+      `[${new Date().toISOString()}] Unhandled Promise Rejection:\n`,
+      err
+    );
+  })
+  .on('uncaughtException', async (err) => {
+    console.error(
+      `[${new Date().toISOString()}] Uncaught Promise Exception:\n`,
+      err
+    );
+  })
+  .on('uncaughtExceptionMonitor', async (err) => {
+    console.error(
+      `[${new Date().toISOString()}] Uncaught Promise Exception (Monitor):\n`,
+      err
+    );
+  });
 
 export default app;
